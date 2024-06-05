@@ -11,7 +11,6 @@ function UserView() {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        // Redirigir a la página de inicio de sesión
         navigate("/login");
       })
       .catch((error) => {

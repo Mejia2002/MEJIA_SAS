@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import firebaseApp from "../firebase/credenciales";
+import firebaseApp from "../firebase/Firebase";
 import { getFirestore, collection, getDocs, doc, setDoc } from "firebase/firestore";
 
 const firestore = getFirestore(firebaseApp);
 
 function HacerContrato() {
   const [descripcion, setDescripcion] = useState("");
-  const [estadoContrato, setEstadoContrato] = useState("");
+  const [estadoContrato, setEstadoContrato] = useState("Activo");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFinalizacion, setFechaFinalizacion] = useState("");
   const [horarioTrabajo, setHorarioTrabajo] = useState("");
@@ -46,7 +46,7 @@ function HacerContrato() {
       });
       setMensaje("Contrato creado con éxito");
       setDescripcion("");
-      setEstadoContrato("");
+      setEstadoContrato("Activo"); 
       setFechaInicio("");
       setFechaFinalizacion("");
       setHorarioTrabajo("");
@@ -87,11 +87,10 @@ function HacerContrato() {
         <br />
         <label>
           Estado del Contrato:
-          <input
-            type="text"
-            value={estadoContrato}
-            onChange={(e) => setEstadoContrato(e.target.value)}
-          />
+          <select value={estadoContrato} onChange={(e) => setEstadoContrato(e.target.value)}>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
         </label>
         <br />
         <label>

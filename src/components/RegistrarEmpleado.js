@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import firebaseApp from "../firebase/Firebase";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+import styles from "../Styles/RegistrarEmpleado.module.css";
 
 const firestore = getFirestore(firebaseApp);
 
@@ -20,7 +21,7 @@ function RegistrarEmpleado() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Limpiar el mensaje de error antes de validar
+    setError("");
 
     // Validaciones de formato
     const cedulaPattern = /^[0-9]{10}$/;
@@ -74,9 +75,9 @@ function RegistrarEmpleado() {
   };
 
   return (
-    <div>
+    <div className={styles.registrarEmpleadoContainer}>
       <h2>Registrar Empleado</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className={styles.registrarEmpleadoForm}>
         <label>
           Cédula:
           <input
@@ -86,7 +87,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setCedula(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Correo Electrónico:
           <input
@@ -96,7 +96,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setCorreoElectronico(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Dirección:
           <input
@@ -106,7 +105,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setDireccion(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Fecha de Contratación:
           <input
@@ -116,7 +114,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setFechaContratacion(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Primer Apellido:
           <input
@@ -126,8 +123,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setPrimerApellido(e.target.value)}
           />
         </label>
-        <br />
-        
         <label>
           Segundo Apellido:
           <input
@@ -137,7 +132,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setSegundoApellido(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Primer Nombre:
           <input
@@ -147,7 +141,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setPrimerNombre(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Segundo Nombre:
           <input
@@ -157,7 +150,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setSegundoNombre(e.target.value)}
           />
         </label>
-        <br />
         <label>
           Salario:
           <input
@@ -167,8 +159,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setSalario(e.target.value)}
           />
         </label>
-        <br />
-        
         <label>
           Teléfono:
           <input
@@ -178,7 +168,6 @@ function RegistrarEmpleado() {
             onChange={(e) => setTelefono(e.target.value)}
           />
         </label>
-        <br />
         <button type="submit">Registrar Empleado</button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}
