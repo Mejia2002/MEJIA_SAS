@@ -1,0 +1,85 @@
+.pagarSueldoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 20px;
+}
+
+.pagarSueldoForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.pagarSueldoForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-weight: 500;
+  color: #333333;
+}
+
+.pagarSueldoForm input[type="text"],
+.pagarSueldoForm input[type="number"],
+.pagarSueldoForm input[type="date"],
+.pagarSueldoForm select,
+.pagarSueldoForm textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.pagarSueldoForm button {
+  padding: 10px;
+  background-color: #28a745;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagarSueldoForm button:hover {
+  background-color: #218838;
+}
+
+.pagarSueldoForm p {
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.pagarSueldoForm p[style*="color: red"] {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.pagarSueldoForm p[style*="color: green"] {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.redButton {
+  background-color: red;
+  color: white;
+}
+
+.infoTable {
+  border-collapse: collapse;
+}
+
+.infoTable td, .infoTable th {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: left;
+}

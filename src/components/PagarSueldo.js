@@ -4,26 +4,31 @@ import {
   getFirestore,
   collection,
   getDocs,
-  doc,
-  updateDoc,
+  query,
+  where,
   addDoc,
 } from "firebase/firestore";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { jsPDF } from "jspdf";
+import logo from '../Images/LogoEmpresa.png';
+import styles from '../Styles/Formularios.module.css';
 
 const firestore = getFirestore(firebaseApp);
 
 function PagarSueldo() {
   const [empleados, setEmpleados] = useState([]);
+  const [contratos, setContratos] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [cedula, setCedula] = useState("");
   const [primerNombre, setPrimerNombre] = useState("");
   const [primerApellido, setPrimerApellido] = useState("");
   const [montoPagar, setMontoPagar] = useState("");
   const [fechaPago, setFechaPago] = useState("");
+  const [año, setAño] = useState("");
   const [mes, setMes] = useState("");
   const [numeroQuincena, setNumeroQuincena] = useState("");
   const [detalles, setDetalles] = useState("");
+  const [tipoPago, setTipoPago] = useState("Pago de quincena");
 
   useEffect(() => {
     const fetchEmpleados = async () => {
@@ -40,38 +45,79 @@ function PagarSueldo() {
       }
     };
 
+    const fetchContratos = async () => {
+      try {
+        const contratosCollection = collection(firestore, "contratos");
+        const contratosSnapshot = await getDocs(contratosCollection);
+        const contratosList = contratosSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setContratos(contratosList);
+      } catch (error) {
+        console.error("Error al obtener los contratos:", error);
+      }
+    };
+
     fetchEmpleados();
+    fetchContratos();
   }, []);
 
-  const buscarEmpleadoPorCedula = () => {
+  const buscarEmpleadoPorCedula = (cedula) => {
     const empleadoEncontrado = empleados.find((empleado) => empleado.cedula === cedula);
     if (empleadoEncontrado) {
-      setSelectedEmployee(empleadoEncontrado);
-      setPrimerNombre(empleadoEncontrado.primer_nombre);
-      setPrimerApellido(empleadoEncontrado.primer_apellido);
-      const salarioDividido = empleadoEncontrado.salario / 2;
-      setMontoPagar(salarioDividido);
+      const contratoEncontrado = contratos.find((contrato) => contrato.cedula === cedula);
+      if (contratoEncontrado) {
+        setSelectedEmployee(empleadoEncontrado);
+        setCedula(empleadoEncontrado.cedula);
+        setPrimerNombre(empleadoEncontrado.primer_nombre);
+        setPrimerApellido(empleadoEncontrado.primer_apellido);
+        const salarioDividido = contratoEncontrado.salario_base / 2;
+        setMontoPagar(salarioDividido);
+      } else {
+        alert("No se encontró ningún contrato para el empleado con la cédula proporcionada.");
+      }
     } else {
-      setSelectedEmployee(null);
-      setPrimerNombre("");
-      setPrimerApellido("");
-      setMontoPagar("");
+      limpiarCampos();
       alert("No se encontró ningún empleado con la cédula proporcionada.");
     }
   };
 
   const handleGuardarPago = async () => {
+    if (!cedula || !primerNombre || !primerApellido || !montoPagar || !fechaPago || !año || !mes || !numeroQuincena) {
+      alert("Todos los campos son obligatorios.");
+      return;
+    }
+
     try {
-      await addDoc(collection(firestore, "PagarSueldo"), {
+      const pagosRef = collection(firestore, "PagarSueldo");
+      const q = query(
+        pagosRef,
+        where("cedula", "==", cedula),
+        where("año", "==", año),
+        where("mes", "==", mes),
+        where("numero_quincena", "==", numeroQuincena)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        alert("Ya existe un pago para este mes y quincena.");
+        return;
+      }
+
+      await addDoc(pagosRef, {
         cedula,
         primer_nombre: primerNombre,
         primer_apellido: primerApellido,
         monto_pagar: montoPagar,
         fecha_pago: fechaPago,
+        año,
         mes,
         numero_quincena: numeroQuincena,
         detalles,
+        tipo_pago: tipoPago,
       });
+
       alert("¡Pago guardado exitosamente!");
     } catch (error) {
       console.error("Error al guardar el pago:", error);
@@ -79,58 +125,110 @@ function PagarSueldo() {
     }
   };
 
-  const handleDescargarPDF = () => {
+  const handleDescargarPDF = async () => {
+    if (!cedula || !primerNombre || !primerApellido || !montoPagar || !fechaPago || !año || !mes || !numeroQuincena) {
+      alert("Todos los campos son obligatorios, excepto los detalles.");
+      return;
+    }
+
     const doc = new jsPDF();
-    doc.text("Pago de Sueldo", 20, 20);
-    doc.text(`Cédula: ${cedula}`, 20, 30);
-    doc.text(`Primer Nombre: ${primerNombre}`, 20, 40);
-    doc.text(`Primer Apellido: ${primerApellido}`, 20, 50);
-    doc.text(`Monto a Pagar: ${montoPagar}`, 20, 60);
-    doc.text(`Fecha de Pago: ${fechaPago}`, 20, 70);
-    doc.text(`Mes: ${mes}`, 20, 80);
-    doc.text(`Número de Quincena: ${numeroQuincena}`, 20, 90);
-    doc.text(`Detalles: ${detalles}`, 20, 100);
-    doc.text("Firma del Empleado: ____________________", 20, 110);
-    doc.save("pago_sueldo.pdf");
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAGO DE QUINCENA", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+
+    const imgWidth = 50;
+    const imgHeight = 50;
+    const imgX = (doc.internal.pageSize.getWidth() - imgWidth) / 2;
+    const imgY = 30;
+    doc.addImage(logo, 'PNG', imgX, imgY, imgWidth, imgHeight);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    const startY = imgY + imgHeight + 20;
+    doc.text(`Cédula: ${cedula}`, 20, startY);
+    doc.text(`Primer Nombre: ${primerNombre}`, 20, startY + 10);
+    doc.text(`Primer Apellido: ${primerApellido}`, 20, startY + 20);
+    doc.text(`Monto a Pagar: ${montoPagar}`, 20, startY + 30);
+    doc.text(`Fecha de Pago: ${fechaPago}`, 20, startY + 40);
+    doc.text(`Año: ${año}`, 20, startY + 50);
+    doc.text(`Mes: ${mes}`, 20, startY + 60);
+    doc.text(`Número de Quincena: ${numeroQuincena}`, 20, startY + 70);
+    doc.text(`Detalles: ${detalles}`, 20, startY + 80);
+    doc.text(`Tipo de Pago: ${tipoPago}`, 20, startY + 90);
+    doc.text("Firma del Empleado: ____________________", 20, startY + 140);
+
+    const fileName = `${primerNombre}_${primerApellido}_Pago(${mes},${numeroQuincena}).pdf`;
+    doc.save(fileName);
+  };
+
+  const limpiarCampos = () => {
+    setSelectedEmployee(null);
+    setCedula("");
+    setPrimerNombre("");
+    setPrimerApellido("");
+    setMontoPagar("");
+    setFechaPago("");
+    setAño("");
+    setMes("");
+    setNumeroQuincena("");
+    setDetalles("");
+    setTipoPago("Pago de quincena");
+  };
+
+  const handleSelectEmpleado = (e) => {
+    const cedulaSeleccionada = e.target.value;
+    setCedula(cedulaSeleccionada);
+    buscarEmpleadoPorCedula(cedulaSeleccionada);
+  };
+
+  const handleAñoChange = (e) => {
+    const nuevoAño = e.target.value;
+    setAño(nuevoAño);
+    setDetalles(`Pago de quincena número ${numeroQuincena} del mes ${mes} del año ${nuevoAño}`);
+  };
+
+  const handleMesChange = (e) => {
+    const nuevoMes = e.target.value;
+    setMes(nuevoMes);
+    setDetalles(`Pago de quincena número ${numeroQuincena} del mes ${nuevoMes} del año ${año}`);
+  };
+
+  const handleNumeroQuincenaChange = (e) => {
+    const nuevaQuincena = e.target.value;
+    setNumeroQuincena(nuevaQuincena);
+    setDetalles(`Pago de quincena número ${nuevaQuincena} del mes ${mes} del año ${año}`);
   };
 
   return (
-    <div className="container mt-5">
+    <div className={styles.container}>
       <h3>Pagar Sueldo</h3>
+      <div className="form-group">
+        <label htmlFor="cedulaInput">Buscar por Cédula:</label>
+        <input
+          type="text"
+          className="form-control"
+          id="cedulaInput"
+          value={cedula}
+          onChange={(e) => setCedula(e.target.value)}
+        />
+        <button className="btn btn-primary mt-2" onClick={() => buscarEmpleadoPorCedula(cedula)}>Buscar</button>
+      </div>
       <div className="form-group">
         <label htmlFor="selectEmpleado">Seleccionar Empleado:</label>
         <select
           className="form-control"
           id="selectEmpleado"
-          value={selectedEmployee ? selectedEmployee.id : ""}
-          onChange={(e) => {
-            const selectedId = e.target.value;
-            const selectedEmp = empleados.find(emp => emp.id === selectedId);
-            setSelectedEmployee(selectedEmp);
-            setCedula(selectedEmp ? selectedEmp.cedula : "");
-            setPrimerNombre(selectedEmp ? selectedEmp.primer_nombre : "");
-            setPrimerApellido(selectedEmp ? selectedEmp.primer_apellido : "");
-            setMontoPagar(selectedEmp ? selectedEmp.salario / 2 : "");
-          }}
+          value={cedula}
+          onChange={handleSelectEmpleado}
         >
           <option value="">Seleccione un empleado</option>
           {empleados.map((empleado) => (
-            <option key={empleado.id} value={empleado.id}>
+            <option key={empleado.id} value={empleado.cedula}>
               {empleado.primer_nombre} {empleado.primer_apellido}
             </option>
           ))}
         </select>
-      </div>
-      <div className="form-group">
-        <label htmlFor="buscarCedula">Buscar por Cédula:</label>
-        <input
-          type="text"
-          id="buscarCedula"
-          className="form-control"
-          value={cedula}
-          onChange={(e) => setCedula(e.target.value)}
-        />
-        <button className="btn btn-primary mt-2" onClick={buscarEmpleadoPorCedula}>Buscar</button>
       </div>
       {selectedEmployee && (
         <div>
@@ -147,6 +245,13 @@ function PagarSueldo() {
             value={montoPagar}
             onChange={(e) => setMontoPagar(e.target.value)}
           />
+          <label>Tipo de Pago:</label>
+          <input
+            type="text"
+            className="form-control"
+            value={tipoPago}
+            disabled
+          />
         </div>
       )}
       <div>
@@ -157,11 +262,23 @@ function PagarSueldo() {
           value={fechaPago}
           onChange={(e) => setFechaPago(e.target.value)}
         />
+        <label>Año:</label>
+        <input
+          type="number"
+          className="form-control"
+          value={año}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (/^\d*$/.test(inputValue) && inputValue.length <= 4) {
+              handleAñoChange(e); 
+            }
+          }}
+        />
         <label>Mes:</label>
         <select
           className="form-control"
           value={mes}
-          onChange={(e) => setMes(e.target.value)}
+          onChange={handleMesChange}
         >
           <option value="">Seleccione un mes</option>
           {[...Array(12)].map((_, index) => (
@@ -174,7 +291,7 @@ function PagarSueldo() {
         <select
           className="form-control"
           value={numeroQuincena}
-          onChange={(e) => setNumeroQuincena(e.target.value)}
+          onChange={handleNumeroQuincenaChange}
         >
           <option value="">Seleccione una quincena</option>
           <option value="1">1</option>
@@ -192,8 +309,11 @@ function PagarSueldo() {
         <button className="btn btn-primary mr-2" onClick={handleGuardarPago}>
           Guardar
         </button>
-        <button className="btn btn-success" onClick={handleDescargarPDF}>
+        <button className="btn btn-success mr-2" onClick={handleDescargarPDF}>
           Descargar PDF
+        </button>
+        <button className="btn btn-danger" onClick={limpiarCampos}>
+          Limpiar
         </button>
       </div>
     </div>
@@ -201,5 +321,3 @@ function PagarSueldo() {
 }
 
 export default PagarSueldo;
-
-       

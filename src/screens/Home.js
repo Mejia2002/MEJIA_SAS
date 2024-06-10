@@ -29,7 +29,6 @@ function Home() {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        // Redirigir a la página de inicio de sesión
         return <Redirect to="/login" />;
       })
       .catch((error) => {

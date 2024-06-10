@@ -7,6 +7,8 @@ const firestore = getFirestore(firebaseApp);
 
 function VisualizarEmpleados() {
   const [empleados, setEmpleados] = useState([]);
+  const [searchCedula, setSearchCedula] = useState("");
+  const [filteredEmpleados, setFilteredEmpleados] = useState([]);
   const [editEmpleado, setEditEmpleado] = useState(null);
   const [editData, setEditData] = useState({
     primer_nombre: "",
@@ -17,7 +19,6 @@ function VisualizarEmpleados() {
     correo_electronico: "",
     direccion: "",
     fecha_contratacion: "",
-    salario: "",
     telefono: "",
   });
 
@@ -31,6 +32,7 @@ function VisualizarEmpleados() {
           ...doc.data(),
         }));
         setEmpleados(empleadosList);
+        setFilteredEmpleados(empleadosList);
       } catch (error) {
         console.error("Error al obtener los empleados:", error);
       }
@@ -43,6 +45,7 @@ function VisualizarEmpleados() {
     try {
       await deleteDoc(doc(firestore, "empleados", id));
       setEmpleados(empleados.filter((empleado) => empleado.id !== id));
+      setFilteredEmpleados(filteredEmpleados.filter((empleado) => empleado.id !== id));
     } catch (error) {
       console.error("Error al borrar el empleado:", error);
     }
@@ -59,7 +62,6 @@ function VisualizarEmpleados() {
       correo_electronico: empleado.correo_electronico,
       direccion: empleado.direccion,
       fecha_contratacion: empleado.fecha_contratacion instanceof Object && empleado.fecha_contratacion.seconds ? new Date(empleado.fecha_contratacion.seconds * 1000).toISOString().split('T')[0] : empleado.fecha_contratacion,
-      salario: empleado.salario,
       telefono: empleado.telefono,
     });
   };
@@ -75,11 +77,15 @@ function VisualizarEmpleados() {
         correo_electronico: editData.correo_electronico,
         direccion: editData.direccion,
         fecha_contratacion: editData.fecha_contratacion,
-        salario: editData.salario,
         telefono: editData.telefono,
       });
       setEmpleados(
         empleados.map((empleado) =>
+          empleado.id === id ? { ...empleado, ...editData } : empleado
+        )
+      );
+      setFilteredEmpleados(
+        filteredEmpleados.map((empleado) =>
           empleado.id === id ? { ...empleado, ...editData } : empleado
         )
       );
@@ -89,9 +95,32 @@ function VisualizarEmpleados() {
     }
   };
 
+  const handleSearch = () => {
+    const searchResults = empleados.filter((empleado) =>
+      empleado.cedula.includes(searchCedula)
+    );
+    setFilteredEmpleados(searchResults);
+  };
+
+  const handleShowAll = () => {
+    setFilteredEmpleados(empleados);
+    setSearchCedula("");
+  };
+
   return (
     <div className="container mt-5">
       <h3>Visualizar Empleados</h3>
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar por cédula"
+          value={searchCedula}
+          onChange={(e) => setSearchCedula(e.target.value)}
+        />
+        <button className="btn btn-primary mt-2" onClick={handleSearch}>Buscar</button>
+        <button className="btn btn-secondary mt-2 mx-2" onClick={handleShowAll}>Ver Empleados</button>
+      </div>
       <table className="table table-striped">
         <thead>
           <tr>
@@ -103,14 +132,13 @@ function VisualizarEmpleados() {
             <th>Correo Electrónico</th>
             <th>Dirección</th>
             <th>Fecha Contratación</th>
-            <th>Salario</th>
             <th>Teléfono</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {empleados.length > 0 ? (
-            empleados.map((empleado) => (
+          {filteredEmpleados.length > 0 ? (
+            filteredEmpleados.map((empleado) => (
               <tr key={empleado.id}>
                 {editEmpleado === empleado.id ? (
                   <>
@@ -182,14 +210,6 @@ function VisualizarEmpleados() {
                       <input
                         type="number"
                         className="form-control"
-                        value={editData.salario}
-                        onChange={(e) => setEditData({ ...editData, salario: e.target.value })}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        className="form-control"
                         value={editData.telefono}
                         onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
                       />
@@ -214,7 +234,6 @@ function VisualizarEmpleados() {
                         ? new Date(empleado.fecha_contratacion.seconds * 1000).toISOString().split('T')[0]
                         : empleado.fecha_contratacion}
                     </td>
-                    <td>{empleado.salario}</td>
                     <td>{empleado.telefono}</td>
                     <td>
                       <button className="btn btn-primary" onClick={() => handleEdit(empleado)}>
@@ -230,7 +249,7 @@ function VisualizarEmpleados() {
             ))
           ) : (
             <tr>
-              <td colSpan="11" className="text-center">No hay empleados disponibles.</td>
+              <td colSpan="10" className="text-center">No hay empleados disponibles.</td>
             </tr>
           )}
         </tbody>

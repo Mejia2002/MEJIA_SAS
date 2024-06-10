@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import styles from "../Styles/Login.module.css"; // Importa el módulo CSS
+import styles from "../Styles/Login.module.css"; 
 import firebaseApp from "../firebase/Firebase";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom"; // Importamos useNavigate
+import { useNavigate } from "react-router-dom"; 
 
 const auth = getAuth(firebaseApp);
 const firestore = getFirestore(firebaseApp);
@@ -18,7 +18,7 @@ function Login() {
   const [primerNombre, setPrimerNombre] = useState("");
   const [primerApellido, setPrimerApellido] = useState("");
   const [cedula, setCedula] = useState("");
-  const navigate = useNavigate(); // Usamos useNavigate para redirigir
+  const navigate = useNavigate(); 
 
   async function registrarUsuario() {
     try {
