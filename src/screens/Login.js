@@ -1,44 +1,62 @@
 import React, { useState } from "react";
-import styles from "../Styles/Login.module.css"; 
+import styles from "../Styles/Login.module.css";
 import firebaseApp from "../firebase/Firebase";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const auth = getAuth(firebaseApp);
 const firestore = getFirestore(firebaseApp);
+const ADMIN_REGISTRATION_CODE = "admin2024seguridad";  
 
 function Login() {
   const [isRegistrando, setIsRegistrando] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rol, setRol] = useState("Usuario");
+  const [rol, setRol] = useState("Administrador");
   const [primerNombre, setPrimerNombre] = useState("");
   const [primerApellido, setPrimerApellido] = useState("");
   const [cedula, setCedula] = useState("");
-  const navigate = useNavigate(); 
+  const [adminCode, setAdminCode] = useState("");
+  const navigate = useNavigate();
 
   async function registrarUsuario() {
     try {
+      if (rol === "Empleado") {
+        const empleadoRef = doc(firestore, `empleados/${cedula}`);
+        const empleadoSnap = await getDoc(empleadoRef);
+        if (!empleadoSnap.exists()) {
+          toast.error("El empleado no existe en la empresa.");
+          return;
+        }
+      }
+
+      if (rol === "Administrador" && adminCode !== ADMIN_REGISTRATION_CODE) {
+        toast.error("Código de registro de administrador incorrecto.");
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const uid = user.uid;
-      const userData = { rol: rol };
+      const userData = { rol: rol, primerNombre, primerApellido, cedula, email };
+
       if (rol === "Administrador") {
         await setDoc(doc(firestore, `usuariosAdmin/${uid}`), userData);
       } else if (rol === "Empleado") {
         await setDoc(doc(firestore, `usuariosEmpleados/${uid}`), userData);
       }
+
       await setDoc(doc(firestore, `todosUsuarios/${uid}`), userData);
-      setSuccessMessage("Registro exitoso.");
+      toast.success("Registro exitoso.");
     } catch (error) {
       console.error("Error al registrar usuario:", error);
       if (error.code === "auth/email-already-in-use") {
-        setErrorMessage("El correo electrónico ya está en uso.");
+        toast.error("El correo electrónico ya está en uso.");
       } else {
-        setErrorMessage("Hubo un error al registrar el usuario. Por favor, inténtalo de nuevo más tarde.");
+        toast.error("Hubo un error al registrar el usuario. Por favor, inténtalo de nuevo más tarde.");
       }
     }
   }
@@ -57,18 +75,18 @@ function Login() {
           const docuSnap = await getDoc(docuRef);
           const userData = docuSnap.data();
           console.log("User Data:", userData);
-          if (userData && userData.rol === "Usuario") {
+          if (userData && userData.rol === "Administrador") {
             navigate("/admin");
           } else if (userData && userData.rol === "Empleado") {
             navigate("/user");
           } else {
-            setErrorMessage("Rol de usuario no válido.");
+            toast.error("Rol de usuario no válido.");
           }
         }
       }
     } catch (error) {
       console.error("Error:", error);
-      setErrorMessage("Hubo un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.");
+      toast.error("Hubo un error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.");
     }
   }
 
@@ -78,11 +96,6 @@ function Login() {
     setPrimerNombre("");
     setPrimerApellido("");
     setCedula("");
-  }
-
-  function limpiarMensaje() {
-    setSuccessMessage("");
-    setErrorMessage("");
   }
 
   return (
@@ -107,6 +120,12 @@ function Login() {
                   <option value="Empleado">Empleado</option>
                 </select>
               </label>
+              {rol === "Administrador" && (
+                <label>
+                  Código de Registro:
+                  <input type="text" id="adminCode" value={adminCode} onChange={(e) => setAdminCode(e.target.value)} required />
+                </label>
+              )}
               {rol === "Empleado" && (
                 <>
                   <label className={styles.employeeFields}>
@@ -125,15 +144,14 @@ function Login() {
               )}
             </>
           )}
-          <input type="submit" value={isRegistrando ? "Registrar" : "Iniciar sesión"} onClick={limpiarMensaje} />
+          <input type="submit" value={isRegistrando ? "Registrar" : "Iniciar sesión"} />
           <button type="button" onClick={limpiarCampos}>Limpiar</button>
         </form>
         <button className={styles.switchButton} onClick={() => setIsRegistrando(!isRegistrando)}>
           {isRegistrando ? "Ya tengo cuenta" : "Quiero registrarme"}
         </button>
-        {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
-        {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
       </div>
+      <ToastContainer />
     </div>
   );
 }

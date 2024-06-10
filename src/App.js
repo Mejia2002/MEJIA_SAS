@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Login from "./screens/Login";
-import AdminView from "./components/AdminView";
-import UserView from "./components/UserView";
+import AdminView from "./componentsAdmin/AdminView";
+import UserView from "./componentsEmpleado/UserView";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import firebaseApp from "./firebase/Firebase";

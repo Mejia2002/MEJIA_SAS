@@ -12,7 +12,9 @@ import RegistrarOtrosGastos from "./RegistrarOtrosGastos";
 import VisualizarOtrosGastos from "./VisualizarOtrosGastos";
 import RegistrarTotalFacturado from "./RegistrarTotalFacturado";
 import VisualizarRegistroTotalFacturado from "./VisualizarRegistroTotalFacturado"; 
-import IngresosMensuales from "./IngresosMensuales"; 
+import IngresosMensuales from "./IngresosMensuales";
+import imageStyles from "../Styles/CenteredImage.module.css"; 
+import LogoEmpresa from "../Images/LogoEmpresa.png"; 
 import { useNavigate } from "react-router-dom";
 import styles from "../Styles/AdminView.module.css";
 
@@ -360,6 +362,23 @@ function AdminView() {
         {showRegistrarTotalFacturado && <RegistrarTotalFacturado />}
         {showVisualizarRegistroTotalFacturado && <VisualizarRegistroTotalFacturado />}
         {showIngresosMensuales && <IngresosMensuales />}
+        {!showRegistrarEmpleado &&
+          !showVisualizarEmpleados &&
+          !showHacerContrato &&
+          !showVisualizarContratos &&
+          !showPagarSueldo &&
+          !showPagarLiquidacion &&
+          !showVisualizarPagosSueldo &&
+          !showVisualizarLiquidaciones &&
+          !showRegistrarOtrosGastos &&
+          !showVisualizarOtrosGastos &&
+          !showRegistrarTotalFacturado &&
+          !showVisualizarRegistroTotalFacturado &&
+          !showIngresosMensuales && (
+            <div className={imageStyles.imageContainer}>
+              <img src={LogoEmpresa} alt="Logo de la Empresa" className={imageStyles.logoImage} />
+            </div>
+          )}
       </div>
     </div>
   );

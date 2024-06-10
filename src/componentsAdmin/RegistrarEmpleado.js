@@ -56,7 +56,6 @@ function RegistrarEmpleado() {
         telefono: parseInt(telefono, 10),
       });
       setMensaje("Empleado registrado con éxito");
-      // Limpiar todos los campos después de un registro exitoso
       setCedula("");
       setCorreoElectronico("");
       setDireccion("");

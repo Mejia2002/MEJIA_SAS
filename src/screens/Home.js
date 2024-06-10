@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Redirect } from "react-router-dom";
-import AdminView from "../components/AdminView";
-import UserView from "../components/UserView";
+import AdminView from "../componentsAdmin/AdminView";
+import UserView from "../componentsEmpleado/UserView";
 import firebaseApp from "../firebase/Firebase";
 import { getAuth, signOut } from "firebase/auth";
 
